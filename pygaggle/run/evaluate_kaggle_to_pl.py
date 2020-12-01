@@ -72,19 +72,6 @@ class KaggleEvaluationOptions(BaseModel):
     
 
 
-    def construct_t5(options: KaggleEvaluationOptions) -> Reranker:
-        model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
-                                    SETTINGS.cache_dir,
-                                    'ranker',
-                                    SETTINGS.t5_model_type,
-                                    SETTINGS.flush_cache)
-        device = torch.device(options.device)
-        model = model_loader.load().to(device).eval()
-        tokenizer = MonoT5.get_tokenizer(options.model_type,
-                                        do_lower_case=options.do_lower_case,
-                                        batch_size=options.batch_size)
-        return {'model_loader': model_loader, 'device' : device, 'model' : model, 'tokenizer' : tokenizer, 'reranker' : MonoT5(model, tokenizer)}
-
 class MyIterableDataset(datasets):
     def __init__(self, options: KaggleEvaluationOptions, transform=None):
         """
@@ -124,7 +111,6 @@ class MyIterableDataset(datasets):
                 rel[1][idx] = True
         #evaluate
         mean_stats = defaultdict(list)
-        
         int_rels = np.array(list(map(int, rel[1])))
         p = int_rels.sum()
         mean_stats['Average spans'] = p
@@ -146,6 +132,19 @@ class MyIterableDataset(datasets):
 
 
 class KaggleReranker(pl.LightningModule):
+    def construct_t5(options: KaggleEvaluationOptions) -> Reranker:
+        model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
+                                    SETTINGS.cache_dir,
+                                    'ranker',
+                                    SETTINGS.t5_model_type,
+                                    SETTINGS.flush_cache)
+        device = torch.device(options.device)
+        model = model_loader.load().to(device).eval()
+        tokenizer = MonoT5.get_tokenizer(options.model_type,
+                                        do_lower_case=options.do_lower_case,
+                                        batch_size=options.batch_size)
+        return {'model_loader': model_loader, 'device' : device, 'model' : model, 'tokenizer' : tokenizer, 'reranker' : MonoT5(model, tokenizer)}
+        
     def __init__(self, options: KaggleEvaluationOptions):
         super().__init__()
         self.options = options
