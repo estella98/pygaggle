@@ -1,7 +1,7 @@
 from typing import Optional, List
 from pathlib import Path
 import logging
-
+from pygaggle.data import LitReviewDataset,relevance
 from pydantic import BaseModel, validator
 from transformers import (AutoModel,
                           AutoModelForQuestionAnswering,
@@ -28,8 +28,10 @@ from pygaggle.model import (CachedT5ModelLoader,
                             SimpleBatchTokenizer,
                             T5BatchTokenizer,
                             metric_names)
-from pygaggle.data import LitReviewDataset
+
 from pygaggle.settings import Cord19Settings
+from torch.utils.data import Dataset, DataLoader
+
 
 SETTINGS = Cord19Settings()
 METHOD_CHOICES = ('transformer', 'bm25', 't5', 'seq_class_transformer',
@@ -72,23 +74,23 @@ class KaggleEvaluationOptions(BaseModel):
     
 
 
-class MyIterableDataset(datasets):
-    def __init__(self, options: KaggleEvaluationOptions, transform=None):
+class MyIterableDataset(Dataset):
+    def __init__(self, dataset, split, index_dir , transform=None):
         """
         Args:
             options: Path to the csv file with annotations.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.ds = LitReviewDataset.from_file(str(options.dataset))
-        self.split = options.split
-        self.loader = Cord19DocumentLoader(str(options.index_dir), split = self.split)
+        self.ds = LitReviewDataset.from_file(str(dataset))
+        self.split = split
+        self.loader = relevance.Cord19DocumentLoader(str(index_dir))
         self.transform = transform
 
     def __len__(self):
         return len(self.ds.query_answer_pairs)
     
-     def __getitem__(self, idx):
+    def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         tokenizer = SpacySenticizer()
@@ -116,6 +118,7 @@ class MyIterableDataset(datasets):
         mean_stats['Average spans'] = p
         mean_stats['Random P@1'] = np.mean(int_rels)
         n = len(int_rels) - p
+        N = len(int_rels)
         mean_stats['Random R@3']=(1 - (n * (n - 1) * (n - 2)) / (N * (N - 1) * (N - 2)))
         numer = np.array([sp.comb(n, i) / (N - i) for i in range(0, n + 1)]) * p
         denom = np.array([sp.comb(N, i) for i in range(0, n + 1)])
@@ -123,7 +126,7 @@ class MyIterableDataset(datasets):
         rmrr = np.sum(numer * rr / denom)
         mean_stats['Random MRR']= (rmrr)
         if not any(rels):
-            logging.warning(f'{doc_id} has no relevant answers')N = len(int_rels)
+            logging.warning(f'{doc_id} has no relevant answers')
         for k, v in mean_stats.items():
             logging.info(f'{k}: {np.mean(v)}')
         return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
@@ -144,7 +147,7 @@ class KaggleReranker(pl.LightningModule):
                                         do_lower_case=options.do_lower_case,
                                         batch_size=options.batch_size)
         return {'model_loader': model_loader, 'device' : device, 'model' : model, 'tokenizer' : tokenizer, 'reranker' : MonoT5(model, tokenizer)}
-        
+
     def __init__(self, options: KaggleEvaluationOptions):
         super().__init__()
         self.options = options
@@ -153,6 +156,9 @@ class KaggleReranker(pl.LightningModule):
         self.reranker_evaluator = RerankerEvaluator(self.evaluate_option['reranker'], options.metrics)
         self.test_dataset = MyIterableDataset(self.options)
         self.batch_size = 4 # set it to 4 for now
+
+
+    #probably you need to implement forward, which is transformer.py rerank function
 
     def test_dataloader():
         return DataLoader(self.test_dataset, batch_size=self.batch_size)
