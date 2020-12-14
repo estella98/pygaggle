@@ -46,7 +46,6 @@ class LitReviewDataset(BaseModel):
             return cls(**json.load(f))
 
     def query_answer_pairs(self, split: str = 'nq'):
-        print("reach 49")
         return ((subcat.nq_name if split == 'nq' else subcat.kq_name, ans)
                 for cat in self.categories
                 for subcat in cat.sub_categories
