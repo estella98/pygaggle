@@ -83,6 +83,7 @@ class MyIterableDataset(Dataset):
                 on a sample.
         """
         self.ds = LitReviewDataset.from_file(str(dataset))
+        print("86")
         self.query_answer_pairs = self.ds.query_answer_pairs(split)
         self.split = split
         self.loader = Cord19DocumentLoader(str(index_dir))
