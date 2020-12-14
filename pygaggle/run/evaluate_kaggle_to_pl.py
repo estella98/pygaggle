@@ -15,6 +15,7 @@ import pytorch_lightning as pl
 from .args import ArgumentParserBuilder, opt
 from pygaggle.rerank.base import Reranker
 from pygaggle.rerank.bm25 import Bm25Reranker
+from pygaggle.model.tokenize import SpacySenticizer
 from pygaggle.rerank.transformer import (
     QuestionAnsweringTransformerReranker,
     MonoBERT,
