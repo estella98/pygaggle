@@ -90,7 +90,7 @@ class MyIterableDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return len(self.query_answer_pairs)
+        return len(list(self.query_answer_pairs))
     
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
