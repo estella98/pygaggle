@@ -82,7 +82,7 @@ class MyIterableDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.ds = LitReviewDataset(str(dataset))
+        self.ds = LitReviewDataset.from_file(str(dataset))
         self.query_answer_pairs = self.ds.query_answer_pairs(split)
         self.split = split
         self.loader = Cord19DocumentLoader(str(index_dir))
