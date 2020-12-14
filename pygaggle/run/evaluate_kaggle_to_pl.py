@@ -1,7 +1,7 @@
 from typing import Optional, List
 from pathlib import Path
 import logging
-from pygaggle.data import LitReviewDataset,relevance
+from pygaggle.data import LitReviewDataset, Cord19DocumentLoader
 from pydantic import BaseModel, validator
 from transformers import (AutoModel,
                           AutoModelForQuestionAnswering,
@@ -82,13 +82,13 @@ class MyIterableDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.ds = LitReviewDataset.from_file(str(dataset))
+        self.query_answer_pairs = LitReviewDataset.query_answer_pairs(str(dataset))
         self.split = split
-        self.loader = relevance.Cord19DocumentLoader(str(index_dir))
+        self.loader = Cord19DocumentLoader(str(index_dir))
         self.transform = transform
 
     def __len__(self):
-        return len(self.ds.query_answer_pairs)
+        return len(self.query_answer_pairs)
     
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -127,8 +127,8 @@ class MyIterableDataset(Dataset):
         mean_stats['Random MRR']= (rmrr)
         if not any(rels):
             logging.warning(f'{doc_id} has no relevant answers')
-        for k, v in mean_stats.items():
-            logging.info(f'{k}: {np.mean(v)}')
+        # for k, v in mean_stats.items():
+        #     logging.info(f'{k}: {np.mean(v)}')
         return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
                 dict(docid=docid)), sents)), rel[1]) 
              
@@ -166,7 +166,7 @@ class KaggleReranker(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         batch_example = batch 
         metric_result = dict()
-        for metric in self.reranker_evaluator.evaluate(examples):
+        for metric in self.reranker_evaluator.evaluate(batch_example):
             metric_result[f'{metric.name:<{width}}for batch{batch_idx}'] = f'{metric.value:.5}'
         return metrix_result
 
