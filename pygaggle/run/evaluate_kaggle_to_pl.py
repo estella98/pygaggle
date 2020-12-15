@@ -132,7 +132,7 @@ class MyIterableDataset(Dataset):
         rmrr = np.sum(numer * rr / denom)
         mean_stats['Random MRR']= (rmrr)
         if not any(rel[1]):
-            logging.warning(f'{doc_id} has no relevant answers')
+            logging.warning(f'{document.id} has no relevant answers')
         # for k, v in mean_stats.items():
         #     logging.info(f'{k}: {np.mean(v)}')
         return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
