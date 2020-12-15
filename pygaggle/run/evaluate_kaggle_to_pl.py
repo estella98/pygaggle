@@ -5,7 +5,7 @@ import json
 import logging
 import scipy.special as sp
 import numpy as np
-from pygaggle.data import LitReviewDataset, Cord19DocumentLoader
+from pygaggle.data import LitReviewDataset, Cord19DocumentLoader, RelevanceExample
 from pydantic import BaseModel, validator
 from transformers import (AutoModel,
                           AutoModelForQuestionAnswering,
