@@ -97,7 +97,7 @@ class MyIterableDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         tokenizer = SpacySenticizer()
-        query, document = self.query_answer_pairs(split=split)[idx]
+        query, document = self.query_answer_pairs(split=self.split)[idx]
         if document.id == MISSING_ID:
             logging.warning(f'Skipping {document.title} (missing ID)')
             return None
