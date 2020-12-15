@@ -131,7 +131,7 @@ class MyIterableDataset(Dataset):
         rr = 1 / np.arange(1, n + 2)
         rmrr = np.sum(numer * rr / denom)
         mean_stats['Random MRR']= (rmrr)
-        if not any(rels):
+        if not any(rel[1]):
             logging.warning(f'{doc_id} has no relevant answers')
         # for k, v in mean_stats.items():
         #     logging.info(f'{k}: {np.mean(v)}')
