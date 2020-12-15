@@ -1,6 +1,10 @@
+from collections import OrderedDict, defaultdict
 from typing import Optional, List
 from pathlib import Path
+import json
 import logging
+import scipy.special as sp
+import numpy as np
 from pygaggle.data import LitReviewDataset, Cord19DocumentLoader
 from pydantic import BaseModel, validator
 from transformers import (AutoModel,
@@ -13,7 +17,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 from .args import ArgumentParserBuilder, opt
-from pygaggle.rerank.base import Reranker
+from pygaggle.rerank.base import Reranker, Query, Text
 from pygaggle.rerank.bm25 import Bm25Reranker
 from pygaggle.model.tokenize import SpacySenticizer
 from pygaggle.rerank.transformer import (
