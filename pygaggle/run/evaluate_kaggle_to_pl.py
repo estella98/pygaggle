@@ -33,7 +33,7 @@ from pygaggle.model import (CachedT5ModelLoader,
 from pygaggle.settings import Cord19Settings
 from torch.utils.data import Dataset, DataLoader
 
-
+MISSING_ID = '<missing>'
 SETTINGS = Cord19Settings()
 METHOD_CHOICES = ('transformer', 'bm25', 't5', 'seq_class_transformer',
                   'qa_transformer', 'random')
@@ -84,10 +84,7 @@ class MyIterableDataset(Dataset):
                 on a sample.
         """
         self.ds = LitReviewDataset.from_file(str(dataset))
-        print("86")
         self.query_answer_pairs = list(self.ds.query_answer_pairs(split))
-        print(type(self.query_answer_pairs))
-        print("90")
         self.split = split
         self.loader = Cord19DocumentLoader(str(index_dir))
         self.transform = transform
