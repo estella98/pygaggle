@@ -136,7 +136,7 @@ class MyIterableDataset(Dataset):
         # for k, v in mean_stats.items():
         #     logging.info(f'{k}: {np.mean(v)}')
         return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
-                dict(docid=docid)), sents)), rel[1]) 
+                dict(docid=document.id)), sents)), rel[1]) 
              
 
 
