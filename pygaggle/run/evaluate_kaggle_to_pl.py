@@ -85,13 +85,13 @@ class MyIterableDataset(Dataset):
         """
         self.ds = LitReviewDataset.from_file(str(dataset))
         print("86")
-        self.query_answer_pairs = self.ds.query_answer_pairs(split)
+        self.query_answer_pairs = list(self.ds.query_answer_pairs(split))
         self.split = split
         self.loader = Cord19DocumentLoader(str(index_dir))
         self.transform = transform
 
     def __len__(self):
-        return len(list(self.query_answer_pairs))
+        return len((self.query_answer_pairs))
     
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
