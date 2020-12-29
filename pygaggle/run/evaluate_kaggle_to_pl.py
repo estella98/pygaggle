@@ -157,7 +157,7 @@ class KaggleReranker(pl.LightningModule):
     def __init__(self, options: KaggleEvaluationOptions):
         super().__init__()
         self.options = options
-        self.evaluate_option = construct_t5(options)
+        self.evaluate_option = self.construct_t5(options)
         self.tokenizer = self.evaluate_option['tokenizer']
         self.reranker_evaluator = RerankerEvaluator(self.evaluate_option['reranker'], options.metrics)
         self.test_dataset = MyIterableDataset(self.options)
