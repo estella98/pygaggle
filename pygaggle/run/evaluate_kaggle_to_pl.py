@@ -141,7 +141,7 @@ class MyIterableDataset(Dataset):
 
 
 class KaggleReranker(pl.LightningModule):
-    def construct_t5(options: KaggleEvaluationOptions) -> Reranker:
+    def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
         model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
                                     SETTINGS.cache_dir,
                                     'ranker',
