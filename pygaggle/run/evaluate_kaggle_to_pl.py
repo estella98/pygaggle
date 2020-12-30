@@ -139,6 +139,14 @@ class MyIterableDataset(Dataset):
                 dict(docid=document.id)), sents)), rel[1]) 
              
 
+class KaggleRerankerData(pl.LightningDataModule):
+    def __init__(self, options: KaggleEvaluationOptions):
+        super().__init__()
+        self.batch_size = 4
+        self.test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
+
+    def test_dataloader(self):
+        return DataLoader(self.test_dataset, batch_size=self.batch_size)
 
 class KaggleReranker(pl.LightningModule):
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
@@ -159,14 +167,14 @@ class KaggleReranker(pl.LightningModule):
         self.evaluate_option = self.construct_t5(options)
         self.tokenizer = self.evaluate_option['tokenizer']
         self.reranker_evaluator = RerankerEvaluator(self.evaluate_option['reranker'], options.metrics)
-        self.test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
-        self.batch_size = 4 # set it to 4 for now
+        # self.test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
+        # self.batch_size = 4 # set it to 4 for now
 
 
     #probably you need to implement forward, which is transformer.py rerank function
 
-    def test_dataloader():
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+    # def test_dataloader():
+    #     return DataLoader(self.test_dataset, batch_size=self.batch_size)
 
     def test_step(self, batch, batch_idx):
         batch_example = batch 
