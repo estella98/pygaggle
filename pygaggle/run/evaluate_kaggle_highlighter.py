@@ -79,8 +79,8 @@ def construct_t5(options: KaggleEvaluationOptions) -> Reranker:
                                  SETTINGS.flush_cache)
     device = torch.device(options.device)
     model = loader.load().to(device).eval()
-    print(f"option model type is {options.model_type} ")
-    tokenizer = MonoT5.get_tokenizer(options.model_type,
+    print(f"option model type is {options.model_name} ")
+    tokenizer = MonoT5.get_tokenizer(options.model_name,
                                      do_lower_case=options.do_lower_case,
                                      batch_size=options.batch_size)
     return MonoT5(model, tokenizer)
