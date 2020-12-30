@@ -145,6 +145,9 @@ class KaggleRerankerData(pl.LightningDataModule):
         self.batch_size = 4
         self.test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
 
+    def train_dataloader(self):
+        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+    
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.batch_size)
 
@@ -175,6 +178,11 @@ class KaggleReranker(pl.LightningModule):
 
     # def test_dataloader():
     #     return DataLoader(self.test_dataset, batch_size=self.batch_size)
+    def training_step(self, batch, batch_idx):
+        pass
+    
+    def configure_optimizers(self):
+        pass
 
     def test_step(self, batch, batch_idx):
         batch_example = batch 
