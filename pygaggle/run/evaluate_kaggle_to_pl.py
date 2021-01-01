@@ -187,7 +187,7 @@ class KaggleReranker(pl.LightningModule):
         return metrix_result
 
 
-dataset = MyIterableDataset(dataset, split, index_dir)
+
 
 def evaluate(model, examples: List[RelevanceExample], metrics=metric_names()) -> List[MetricAccumulator]:
     metrics = [cls() for cls in metrics]
