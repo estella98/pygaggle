@@ -157,6 +157,7 @@ class KaggleReranker(pl.LightningModule):
     def __init__(self, options: KaggleEvaluationOptions):
         super().__init__()
         self.model = self.construct_t5(options)
+        self.reranker = RerankerEvaluator(self.model, metric_names())
 
     #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
@@ -190,22 +191,12 @@ class KaggleReranker(pl.LightningModule):
 
 
 
-def evaluate(model, examples: List[RelevanceExample], metrics=metric_names()) -> List[MetricAccumulator]:
-    print(metrics)
-    metrics = [cls() for cls in metrics]
-    for example in tqdm(examples, disable=not self.use_tqdm):
-        scores = [x.score for x in model.rerank(example.query,
-                                                        example.documents)]
-        if self.writer is not None:
-            self.writer.write(scores, example)
-        for metric in metrics:
-            metric.accumulate(scores, example)
-    return metrics
+
 
 def test(options):
-    reranker = KaggleReranker(options)
+    model_reranker = KaggleReranker(options)
     examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
-    evaluate(reranker.model,options.metrics)
+    model_reranker.evaluate(examples)
 
         
        
