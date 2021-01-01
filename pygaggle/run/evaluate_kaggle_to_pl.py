@@ -32,7 +32,8 @@ from pygaggle.model import (CachedT5ModelLoader,
                             RerankerEvaluator,
                             SimpleBatchTokenizer,
                             T5BatchTokenizer,
-                            metric_names)
+                            metric_names,
+                            MetricAccumulator)
 
 from pygaggle.settings import Cord19Settings
 from torch.utils.data import Dataset, DataLoader
