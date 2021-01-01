@@ -159,6 +159,8 @@ class KaggleReranker(pl.LightningModule):
         self.model = self.construct_t5(options)
         self.reranker = RerankerEvaluator(self.model, metric_names())
 
+    def forward(self, examples):
+        self.reranker.evaluate(examples)
     #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
         cached_model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
@@ -202,7 +204,7 @@ def test(options):
                                         split=options.split)
     #model_reranker.reranker.evaluate(examples)
     try_out = model_reranker.eval().cuda(device = 0)
-    print(try_out)
+    output = model_reranker(examples).data.cpu().
  # select between different gpu :
        #https://pytorch-lightning.readthedocs.io/en/stable/multi_gpu.html
        
