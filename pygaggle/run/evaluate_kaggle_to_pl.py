@@ -166,7 +166,7 @@ class KaggleReranker(pl.LightningModule):
                                     SETTINGS.t5_model_type,
                                     SETTINGS.flush_cache)
         device = torch.device(options.device)
-        cached_model = model_loader.load().to(device).eval()
+        cached_model = cached_model_loader.load().to(device).eval()
         tokenizer = MonoT5.get_tokenizer(options.model_name,
                                         do_lower_case=options.do_lower_case,
                                         batch_size=options.batch_size)
