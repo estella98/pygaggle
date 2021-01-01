@@ -187,6 +187,7 @@ class KaggleReranker(pl.LightningModule):
         for metric in self.reranker_evaluator.evaluate(batch_example):
             metric_result[f'{metric.name:<{width}}for batch{batch_idx}'] = f'{metric.value:.5}'
         return metrix_result
+       
 
 
 
@@ -200,6 +201,7 @@ def test(options):
     examples = ds.to_senticized_dataset(str(options.index_dir),
                                         split=options.split)
     model_reranker.reranker.evaluate(examples)
-
-        
+    try_out = model_reranker.eval().cuda(device = 0)
+ # select between different gpu :
+       #https://pytorch-lightning.readthedocs.io/en/stable/multi_gpu.html
        
