@@ -196,7 +196,7 @@ class KaggleReranker(pl.LightningModule):
 def test(options):
     model_reranker = KaggleReranker(options)
     examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
-    model_reranker.evaluate(examples)
+    model_reranker.reranker.evaluate(examples)
 
         
        
