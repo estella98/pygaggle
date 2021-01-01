@@ -195,7 +195,10 @@ class KaggleReranker(pl.LightningModule):
 
 def test(options):
     model_reranker = KaggleReranker(options)
-    examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
+    #examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
+    ds = LitReviewDataset.from_file(str(options.dataset))
+    examples = ds.to_senticized_dataset(str(options.index_dir),
+                                        split=options.split)
     model_reranker.reranker.evaluate(examples)
 
         
