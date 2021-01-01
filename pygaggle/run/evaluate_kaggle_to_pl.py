@@ -152,32 +152,27 @@ class KaggleRerankerData(pl.LightningDataModule):
         return DataLoader(self.test_dataset, batch_size=self.batch_size)
 
 class KaggleReranker(pl.LightningModule):
+  
+    def __init__(self, options: KaggleEvaluationOptions):
+        super().__init__()
+        self.model = self.construct_t5(options)
+
+    #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
-        model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
+        cached_model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
                                     SETTINGS.cache_dir,
                                     'ranker',
                                     SETTINGS.t5_model_type,
                                     SETTINGS.flush_cache)
         device = torch.device(options.device)
-        model = model_loader.load().to(device).eval()
+        cached_model = model_loader.load().to(device).eval()
         tokenizer = MonoT5.get_tokenizer(options.model_name,
                                         do_lower_case=options.do_lower_case,
                                         batch_size=options.batch_size)
-        return {'model_loader': model_loader, 'device' : device, 'model' : model, 'tokenizer' : tokenizer, 'reranker' : MonoT5(model, tokenizer)}
+        model= MonoT5(cached_model,tokenizer)
+        return model
 
-    def __init__(self, options: KaggleEvaluationOptions):
-        super().__init__()
-        self.evaluate_option = self.construct_t5(options)
-        self.tokenizer = self.evaluate_option['tokenizer']
-        self.reranker_evaluator = RerankerEvaluator(self.evaluate_option['reranker'], options.metrics)
-        # self.test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
-        # self.batch_size = 4 # set it to 4 for now
-
-
-    #probably you need to implement forward, which is transformer.py rerank function
-
-    # def test_dataloader():
-    #     return DataLoader(self.test_dataset, batch_size=self.batch_size)
+    # in the future, we should migrate the training, optimization step into here
     def training_step(self, batch, batch_idx):
         pass
     
@@ -192,11 +187,23 @@ class KaggleReranker(pl.LightningModule):
         return metrix_result
 
 
+dataset = MyIterableDataset(dataset, split, index_dir)
 
-       
-        
-   
-       
+def evaluate(model, examples: List[RelevanceExample], metrics=metric_names()) -> List[MetricAccumulator]:
+    metrics = [cls() for cls in metrics]
+    for example in tqdm(examples, disable=not self.use_tqdm):
+        scores = [x.score for x in model.rerank(example.query,
+                                                        example.documents)]
+        if self.writer is not None:
+            self.writer.write(scores, example)
+        for metric in metrics:
+            metric.accumulate(scores, example)
+    return metrics
+
+def test(options):
+    reranker = KaggleReranker(options)
+    examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
+    evaluate(reranker.model,options.metrics)
 
         
        
