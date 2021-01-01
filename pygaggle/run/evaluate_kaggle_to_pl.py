@@ -200,8 +200,9 @@ def test(options):
     ds = LitReviewDataset.from_file(str(options.dataset))
     examples = ds.to_senticized_dataset(str(options.index_dir),
                                         split=options.split)
-    model_reranker.reranker.evaluate(examples)
+    #model_reranker.reranker.evaluate(examples)
     try_out = model_reranker.eval().cuda(device = 0)
+    print(try_out)
  # select between different gpu :
        #https://pytorch-lightning.readthedocs.io/en/stable/multi_gpu.html
        
