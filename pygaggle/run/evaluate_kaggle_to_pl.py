@@ -191,6 +191,7 @@ class KaggleReranker(pl.LightningModule):
 
 
 def evaluate(model, examples: List[RelevanceExample], metrics=metric_names()) -> List[MetricAccumulator]:
+    print(metrics)
     metrics = [cls() for cls in metrics]
     for example in tqdm(examples, disable=not self.use_tqdm):
         scores = [x.score for x in model.rerank(example.query,
