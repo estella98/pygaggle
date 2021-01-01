@@ -204,7 +204,7 @@ def test(options):
                                         split=options.split)
     #model_reranker.reranker.evaluate(examples)
     try_out = model_reranker.eval().cuda(device = 0)
-    output = model_reranker(examples).data.cpu()
+    output = try_out(examples).data.cpu()
  # select between different gpu :
        #https://pytorch-lightning.readthedocs.io/en/stable/multi_gpu.html
        
