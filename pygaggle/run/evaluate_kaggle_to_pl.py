@@ -89,22 +89,22 @@ class RerankDataset(Dataset):
         self.model_inputs = list(self.reranker_evaluator.reranker.tokenizer.traverse_query_document(self.batch_inputs))
 
     def __len__(self):
-        return len(model_inputs)
+        return len(self.model_inputs)
     
     def __getitem__(self, idx):
-        batch = model_inputs[i]
+        batch = self.model_inputs[i]
         input_ids = batch.output['input_ids'].to(self.device)
         attn_mask = batch.output['attention_mask'].to(self.device)
         decode_ids = torch.full((input_ids.size(0), 1),
                             model.config.decoder_start_token_id,
                             dtype=torch.long).to(input_ids.device)
         past = model.get_encoder()(input_ids, attention_mask=attn_mask)
-        model_inputs = model.prepare_inputs_for_generation(
+        batch_model_input = model.prepare_inputs_for_generation(
             decode_ids,
             past=past,
             attention_mask=attn_mask,
             use_cache=True)
-        return model_inputs
+        return batch_model_input
 
 
 
