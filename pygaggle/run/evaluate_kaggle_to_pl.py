@@ -80,12 +80,12 @@ class KaggleEvaluationOptions(BaseModel):
     
     
 class RerankDataset(Dataset):
-    def __init__(self, example:RelevanceExample, reranker:Reranker):
-        self.reranker = reranker
+    def __init__(self, example:RelevanceExample, reranker_evaluator:RerankerEvaluator):
+        self.reranker_evaluator = reranker_evaluator
         self.query = example.query
         self.texts = example.documents
         self.batch_inputs =  batch_input = QueryDocumentBatch(query=self.query, documents=self.texts)
-        self.model_inputs = list(self.reranker.tokenizer.traverse_query_document(self.batch_input))
+        self.model_inputs = list(self.reranker_evaluator.reranker.tokenizer.traverse_query_document(self.batch_input))
 
     def __len__(self):
         texts = deepcopy(self.example.documents)
@@ -184,10 +184,10 @@ class KaggleReranker(pl.LightningModule):
     def __init__(self, options: KaggleEvaluationOptions):
         super().__init__()
         self.model = self.construct_t5(options)
-        self.reranker = RerankerEvaluator(self.model, metric_names())
+        self.reranker_evaluator = RerankerEvaluator(self.model, metric_names())
 
     def forward(self, examples):
-        self.reranker.evaluate(examples)
+        self.reranker_evaluator.evaluate(examples)
 
     #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
