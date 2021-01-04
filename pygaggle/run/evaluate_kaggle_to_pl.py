@@ -33,6 +33,7 @@ from pygaggle.model import (CachedT5ModelLoader,
                             SimpleBatchTokenizer,
                             T5BatchTokenizer,
                             metric_names,
+                            QueryDocumentBatch
                             )
 from pygaggle.model.evaluate import MetricAccumulator
 from pygaggle.settings import Cord19Settings
