@@ -93,11 +93,13 @@ class RerankDataset(Dataset):
     
     def __getitem__(self, idx):
         batch = self.model_inputs[idx]
-        input_ids = batch.output['input_ids'].to(self.reranker_evaluator.reranker.device)
-        attn_mask = batch.output['attention_mask'].to(self.reranker_evaluator.reranker.device)
+        device = self.reranker_evaluator.reranker.device
+        input_ids = batch.output['input_ids'].to(device)
+        attn_mask = batch.output['attention_mask'].to(device)
         decode_ids = torch.full((input_ids.size(0), 1),
                             model.config.decoder_start_token_id,
                             dtype=torch.long).to(input_ids.device)
+        model = self.reranker_evaluator.reranker.model
         past = model.get_encoder()(input_ids, attention_mask=attn_mask)
         batch_model_input = model.prepare_inputs_for_generation(
             decode_ids,
