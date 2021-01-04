@@ -46,8 +46,8 @@ class MonoT5(Reranker):
             AutoTokenizer.from_pretrained(pretrained_model_name_or_path, *args, **kwargs),
             batch_size=batch_size
         )
-
     def rerank(self, query: Query, texts: List[Text]) -> List[Text]:
+        print(f"self device is {self.device}")
         texts = deepcopy(texts)
         batch_input = QueryDocumentBatch(query=query, documents=texts)
         for batch in self.tokenizer.traverse_query_document(batch_input):
