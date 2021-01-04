@@ -92,7 +92,7 @@ class RerankDataset(Dataset):
         return len(self.model_inputs)
     
     def __getitem__(self, idx):
-        batch = self.model_inputs[i]
+        batch = self.model_inputs[idx]
         input_ids = batch.output['input_ids'].to(self.device)
         attn_mask = batch.output['attention_mask'].to(self.device)
         decode_ids = torch.full((input_ids.size(0), 1),
