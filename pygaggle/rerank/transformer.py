@@ -41,7 +41,7 @@ class MonoT5(Reranker):
 
     @staticmethod
     def get_tokenizer(pretrained_model_name_or_path: str = 't5-base',
-                      *args, batch_size: int = 8, **kwargs) -> T5BatchTokenizer:
+                      *args, batch_size: int = 2, **kwargs) -> T5BatchTokenizer:
         return T5BatchTokenizer(
             AutoTokenizer.from_pretrained(pretrained_model_name_or_path, *args, **kwargs),
             batch_size=batch_size
@@ -68,6 +68,8 @@ class MonoT5(Reranker):
         return texts
 
 
+    def rerank_pl(self, query: Query, texts: List[Text]) -> List[Test]:
+        pass
 class UnsupervisedTransformerReranker(Reranker):
     methods = dict(max=lambda x: x.max().item(),
                    mean=lambda x: x.mean().item(),
