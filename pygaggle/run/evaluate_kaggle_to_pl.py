@@ -84,7 +84,7 @@ class RerankDataset(Dataset):
         self.reranker_evaluator = reranker_evaluator
         self.query = example.query
         self.texts = example.documents
-        self.batch_inputs =  batch_input = QueryDocumentBatch(query=self.query, documents=self.texts)
+        self.batch_inputs = QueryDocumentBatch(query=self.query, documents=self.texts)
         self.model_inputs = list(self.reranker_evaluator.reranker.tokenizer.traverse_query_document(self.batch_input))
 
     def __len__(self):
