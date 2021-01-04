@@ -78,6 +78,34 @@ class KaggleEvaluationOptions(BaseModel):
         return v
     
     
+class RerankDataset(Dataset):
+    def __init__(self, example:RelevanceExample, reranker:Reranker):
+        self.reranker = reranker
+        self.query = example.query
+        self.texts = example.documents
+        self.batch_inputs =  batch_input = QueryDocumentBatch(query=self.query, documents=self.texts)
+        self.model_inputs = list(self.reranker.tokenizer.traverse_query_document(self.batch_input))
+
+    def __len__(self):
+        texts = deepcopy(self.example.documents)
+        batch_input = QueryDocumentBatch(query=self.example.query, documents=texts)
+        return len(model_inputs)
+    
+    def __getitem__(self, idx):
+        batch = model_inputs[i]
+        input_ids = batch.output['input_ids'].to(self.device)
+        attn_mask = batch.output['attention_mask'].to(self.device)
+        decode_ids = torch.full((input_ids.size(0), 1),
+                            model.config.decoder_start_token_id,
+                            dtype=torch.long).to(input_ids.device)
+        past = model.get_encoder()(input_ids, attention_mask=attn_mask)
+        model_inputs = model.prepare_inputs_for_generation(
+            decode_ids,
+            past=past,
+            attention_mask=attn_mask,
+            use_cache=True)
+        return model_inputs
+
 
 
 class MyIterableDataset(Dataset):
@@ -134,8 +162,6 @@ class MyIterableDataset(Dataset):
         mean_stats['Random MRR']= (rmrr)
         if not any(rel[1]):
             logging.warning(f'{document.id} has no relevant answers')
-        # for k, v in mean_stats.items():
-        #     logging.info(f'{k}: {np.mean(v)}')
         return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
                 dict(docid=document.id)), sents)), rel[1]) 
              
@@ -161,7 +187,7 @@ class KaggleReranker(pl.LightningModule):
 
     def forward(self, examples):
         self.reranker.evaluate(examples)
-        
+
     #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
         cached_model_loader = CachedT5ModelLoader(SETTINGS.t5_model_dir,
