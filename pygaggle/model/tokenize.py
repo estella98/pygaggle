@@ -100,12 +100,24 @@ class QueryDocumentBatchTokenizer(TokenizerEncodeMixin):
         query = batch_input.query
         print(f"batch size is {self.batch_size}")
         for batch_idx in range(0, len(batch_input), self.batch_size):
-            docs = batch_input.documents[batch_idx:batch_idx + self.batch_size]
+            docs = batch_input.documents[batch_idx:batch_idx + self.batch_size]4
             outputs = self.encode([self.pattern.format(
                                         query=query.text,
                                         document=doc.text) for doc in docs])
             yield QueryDocumentBatch(query, docs, outputs)
 
+    def traverse_query_documents_whole(
+            self,
+            batch_inputs: List[QueryDocumentBatch]) -> Iterable[QueryDocumentBatch]:
+        for batch_input in batch_inputs:
+            query = batch_input.query
+            print(f"batch size is {self.batch_size}")
+            for batch_idx in range(0, len(batch_input), self.batch_size):
+                docs = batch_input.documents[batch_idx:batch_idx + self.batch_size]
+                outputs = self.encode([self.pattern.format(
+                                            query=query.text,
+                                            document=doc.text) for doc in docs])
+                yield QueryDocumentBatch(query, docs, outputs)
 
 class T5BatchTokenizer(AppendEosTokenizerMixin, QueryDocumentBatchTokenizer):
     def __init__(self, *args, **kwargs):

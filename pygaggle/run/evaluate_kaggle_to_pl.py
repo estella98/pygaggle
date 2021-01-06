@@ -111,71 +111,89 @@ class RerankDataset(Dataset):
 
 
 class MyIterableDataset(Dataset):
-    def __init__(self, dataset, split, index_dir , transform=None):
+    def __init__(self, options:KaggleEvaluationOptions, reranker_evaluator:RerankerEvaluator, transform=None):
         """
         Args:
             options: Path to the csv file with annotations.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.ds = LitReviewDataset.from_file(str(dataset))
-        self.query_answer_pairs = list(self.ds.query_answer_pairs(split))
-        self.split = split
-        self.loader = Cord19DocumentLoader(str(index_dir))
-        self.transform = transform
+        self.ds = LitReviewDataset.from_file(str(options.dataset))
+        self.examples = ds.to_senticized_dataset(str(options.index_dir),
+                                        split=options.split)
+        self.tokenizer = reranker_evaluator
+        self.batch_inputs = self.serialize()
+
+    def serialize(self):
+        batch_inputs = [QueryDocumentBatch(query=e.query, documents=deepcopy(e.documents)) for e in self.examples]
+        return list(self.reranker_evaluator.reranker.tokenizer.traverse_query_document(batch_input))
 
     def __len__(self):
-        return len((self.query_answer_pairs))
+        return len(self.batch_inputs)
     
     def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        tokenizer = SpacySenticizer()
-        query, document = self.query_answer_pairs[idx]
-        if document.id == MISSING_ID:
-            logging.warning(f'Skipping {document.title} (missing ID)')
-            return None
-        key = (query, document.id)
-        doc, example= None, None
-        try:
-            doc = self.loader.load_document(document.id)
-            example = (key, tokenizer(doc.all_text))
-        except ValueError as e:
-            logging.warning(f'Skipping {document.id} ({e})')
-            return None
-        sents = tokenizer(doc.all_text)
-        rel = (key, [False] * len(sents))
-        for idx, s in enumerate(sents):
-            if document.exact_answer in s:
-                rel[1][idx] = True
-        #evaluate
-        mean_stats = defaultdict(list)
-        int_rels = np.array(list(map(int, rel[1])))
-        p = int_rels.sum()
-        mean_stats['Average spans'] = p
-        mean_stats['Random P@1'] = np.mean(int_rels)
-        n = len(int_rels) - p
-        N = len(int_rels)
-        mean_stats['Random R@3']=(1 - (n * (n - 1) * (n - 2)) / (N * (N - 1) * (N - 2)))
-        numer = np.array([sp.comb(n, i) / (N - i) for i in range(0, n + 1)]) * p
-        denom = np.array([sp.comb(N, i) for i in range(0, n + 1)])
-        rr = 1 / np.arange(1, n + 2)
-        rmrr = np.sum(numer * rr / denom)
-        mean_stats['Random MRR']= (rmrr)
-        if not any(rel[1]):
-            logging.warning(f'{document.id} has no relevant answers')
-        return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
-                dict(docid=document.id)), sents)), rel[1]) 
+        batch = self.batch_inputs[idx]
+        device = self.reranker_evaluator.reranker.device
+        model = self.reranker_evaluator.reranker.model
+        input_ids = batch.output['input_ids'].to(device)
+        attn_mask = batch.output['attention_mask'].to(device)
+        decode_ids = torch.full((input_ids.size(0), 1),
+                            model.config.decoder_start_token_id,
+                            dtype=torch.long).to(input_ids.device)
+        past = model.get_encoder()(input_ids, attention_mask=attn_mask)
+        batch_model_input = model.prepare_inputs_for_generation(
+            decode_ids,
+            past=past,
+            attention_mask=attn_mask,
+            use_cache=True)
+        return batch_model_input
+
+        # if torch.is_tensor(idx):
+        #     idx = idx.tolist()
+        # tokenizer = SpacySenticizer()
+        # query, document = self.query_answer_pairs[idx]
+        # if document.id == MISSING_ID:
+        #     logging.warning(f'Skipping {document.title} (missing ID)')
+        #     return None
+        # key = (query, document.id)
+        # doc, example= None, None
+        # try:
+        #     doc = self.loader.load_document(document.id)
+        #     example = (key, tokenizer(doc.all_text))
+        # except ValueError as e:
+        #     logging.warning(f'Skipping {document.id} ({e})')
+        #     return None
+        # sents = tokenizer(doc.all_text)
+        # rel = (key, [False] * len(sents))
+        # for idx, s in enumerate(sents):
+        #     if document.exact_answer in s:
+        #         rel[1][idx] = True
+        # #evaluate
+        # mean_stats = defaultdict(list)
+        # int_rels = np.array(list(map(int, rel[1])))
+        # p = int_rels.sum()
+        # mean_stats['Average spans'] = p
+        # mean_stats['Random P@1'] = np.mean(int_rels)
+        # n = len(int_rels) - p
+        # N = len(int_rels)
+        # mean_stats['Random R@3']=(1 - (n * (n - 1) * (n - 2)) / (N * (N - 1) * (N - 2)))
+        # numer = np.array([sp.comb(n, i) / (N - i) for i in range(0, n + 1)]) * p
+        # denom = np.array([sp.comb(N, i) for i in range(0, n + 1)])
+        # rr = 1 / np.arange(1, n + 2)
+        # rmrr = np.sum(numer * rr / denom)
+        # mean_stats['Random MRR']= (rmrr)
+        # if not any(rel[1]):
+        #     logging.warning(f'{document.id} has no relevant answers')
+        # return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
+        #         dict(docid=document.id)), sents)), rel[1]) 
              
-
+test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
 class KaggleRerankerData(pl.LightningDataModule):
-    def __init__(self, options: KaggleEvaluationOptions):
+    def __init__(self, options: KaggleEvaluationOptions, example:RelevanceExample, pl_module):
         super().__init__()
-        self.batch_size = 4
-        self.test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
-
+        self.example_data = RerankDataset(example,pl_module)
     def train_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+        return DataLoader(self.example_data, batch_size=options.batch_size)
     
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.batch_size)
