@@ -121,7 +121,7 @@ class MyIterableDataset(Dataset):
         self.ds = LitReviewDataset.from_file(str(options.dataset))
         self.examples = self.ds.to_senticized_dataset(str(options.index_dir),
                                         split=options.split)
-        self.rerank_evaluator = reranker_evaluator
+        self.reranker_evaluator = reranker_evaluator
         self.batch_inputs = self.serialize()
 
     def serialize(self):
