@@ -187,7 +187,7 @@ class MyIterableDataset(Dataset):
         # return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
         #         dict(docid=document.id)), sents)), rel[1]) 
              
-test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
+# test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
 class KaggleRerankerData(pl.LightningDataModule):
     def __init__(self, options: KaggleEvaluationOptions, example:RelevanceExample, pl_module):
         super().__init__()
@@ -243,15 +243,15 @@ class KaggleReranker(pl.LightningModule):
 
 
 
-def test(options):
-    model_reranker = KaggleReranker(options)
-    #examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
-    ds = LitReviewDataset.from_file(str(options.dataset))
-    examples = ds.to_senticized_dataset(str(options.index_dir),
-                                        split=options.split)
-    #model_reranker.reranker.evaluate(examples)
-    try_out = model_reranker.eval().cuda(device = 0)
-    output = try_out(examples)
+# def test(options):
+#     model_reranker = KaggleReranker(options)
+#     #examples = MyIterableDataset(options.dataset, options.split, options.index_dir)
+#     ds = LitReviewDataset.from_file(str(options.dataset))
+#     examples = ds.to_senticized_dataset(str(options.index_dir),
+#                                         split=options.split)
+#     #model_reranker.reranker.evaluate(examples)
+#     try_out = model_reranker.eval().cuda(device = 0)
+    # output = try_out(examples)
  # select between different gpu :
        #https://pytorch-lightning.readthedocs.io/en/stable/multi_gpu.html
        
