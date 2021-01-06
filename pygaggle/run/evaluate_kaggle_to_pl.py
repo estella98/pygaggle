@@ -126,7 +126,7 @@ class MyIterableDataset(Dataset):
 
     def serialize(self):
         batch_inputs = [QueryDocumentBatch(query=e.query, documents=deepcopy(e.documents)) for e in self.examples]
-        return list(self.reranker_evaluator.reranker.tokenizer.traverse_query_document(batch_inputs))
+        return list(self.reranker_evaluator.reranker.tokenizer.traverse_query_documents_whole(batch_inputs))
 
     def __len__(self):
         return len(self.batch_inputs)
