@@ -111,7 +111,7 @@ class QueryDocumentBatchTokenizer(TokenizerEncodeMixin):
             batch_inputs: List[QueryDocumentBatch]) -> Iterable[QueryDocumentBatch]:
         for batch_input in batch_inputs:
             query = batch_input.query
-            print(f"batch size is {self.batch_size}")
+            # print(f"batch size is {self.batch_size}")
             for batch_idx in range(0, len(batch_input), self.batch_size):
                 docs = batch_input.documents[batch_idx:batch_idx + self.batch_size]
                 outputs = self.encode([self.pattern.format(
