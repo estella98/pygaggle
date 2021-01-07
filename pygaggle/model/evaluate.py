@@ -161,7 +161,7 @@ class RerankerEvaluator:
         for example in tqdm(examples, disable=not self.use_tqdm):
             scores = [x.score for x in self.reranker.rerank(example.query,
                                                             example.documents)]
-            print(f'scores is {score}\n')
+            print(f'scores is {scores}\n')
             if self.writer is not None:
                 self.writer.write(scores, example)
             for metric in metrics:
