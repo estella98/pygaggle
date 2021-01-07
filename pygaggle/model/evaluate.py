@@ -157,7 +157,7 @@ class RerankerEvaluator:
     def evaluate(self,
                  examples: List[RelevanceExample]) -> List[MetricAccumulator]:
         metrics = [cls() for cls in self.metrics]
-        print("metrics is {metrics}")
+        print(f"metrics is {metrics}")
         for example in tqdm(examples, disable=not self.use_tqdm):
             scores = [x.score for x in self.reranker.rerank(example.query,
                                                             example.documents)]
