@@ -152,13 +152,13 @@ class MyIterableDataset(Dataset):
 class KaggleRerankerData(pl.LightningDataModule):
     def __init__(self, options: KaggleEvaluationOptions, reranker_evaluator:RerankerEvaluator):
         super().__init__()
-        self.options = options
+        self.batch_size = options.batch_size
         self.data = MyIterableDataset(options, reranker_evaluator)
     def train_dataloader(self):
-        return DataLoader(self.data, batch_size=self.options.batch_size)
+        return DataLoader(self.data, batch_size=self.batch_size)
     
     def test_dataloader(self):
-        return DataLoader(self.dataset, batch_size=self.options.batch_size)
+        return DataLoader(self.dataset, batch_size=self.batch_size)
 
 class KaggleReranker(pl.LightningModule):
   
