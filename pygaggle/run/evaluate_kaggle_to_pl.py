@@ -169,6 +169,7 @@ class KaggleReranker(pl.LightningModule):
     def forward(self, data):
         outputs = self.reranker.model(**data)  # (batch_size, cur_len, vocab_size)
         next_token_logits = outputs[0][:, -1, :]  # (batch_size, vocab_size)
+        decode_ids = data["decoder_input_ids"]
         decode_ids = torch.cat([decode_ids,
                                 next_token_logits.max(1)[1].unsqueeze(-1)],
                                dim=-1)
