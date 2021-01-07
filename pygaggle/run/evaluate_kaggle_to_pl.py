@@ -148,50 +148,11 @@ class MyIterableDataset(Dataset):
             use_cache=True)
         return batch_model_input
 
-        # if torch.is_tensor(idx):
-        #     idx = idx.tolist()
-        # tokenizer = SpacySenticizer()
-        # query, document = self.query_answer_pairs[idx]
-        # if document.id == MISSING_ID:
-        #     logging.warning(f'Skipping {document.title} (missing ID)')
-        #     return None
-        # key = (query, document.id)
-        # doc, example= None, None
-        # try:
-        #     doc = self.loader.load_document(document.id)
-        #     example = (key, tokenizer(doc.all_text))
-        # except ValueError as e:
-        #     logging.warning(f'Skipping {document.id} ({e})')
-        #     return None
-        # sents = tokenizer(doc.all_text)
-        # rel = (key, [False] * len(sents))
-        # for idx, s in enumerate(sents):
-        #     if document.exact_answer in s:
-        #         rel[1][idx] = True
-        # #evaluate
-        # mean_stats = defaultdict(list)
-        # int_rels = np.array(list(map(int, rel[1])))
-        # p = int_rels.sum()
-        # mean_stats['Average spans'] = p
-        # mean_stats['Random P@1'] = np.mean(int_rels)
-        # n = len(int_rels) - p
-        # N = len(int_rels)
-        # mean_stats['Random R@3']=(1 - (n * (n - 1) * (n - 2)) / (N * (N - 1) * (N - 2)))
-        # numer = np.array([sp.comb(n, i) / (N - i) for i in range(0, n + 1)]) * p
-        # denom = np.array([sp.comb(N, i) for i in range(0, n + 1)])
-        # rr = 1 / np.arange(1, n + 2)
-        # rmrr = np.sum(numer * rr / denom)
-        # mean_stats['Random MRR']= (rmrr)
-        # if not any(rel[1]):
-        #     logging.warning(f'{document.id} has no relevant answers')
-        # return RelevanceExample(Query(query),  list(map(lambda s: Text(s,
-        #         dict(docid=document.id)), sents)), rel[1]) 
-             
-# test_dataset = MyIterableDataset(options.dataset, options.split, options.index_dir)
+        
 class KaggleRerankerData(pl.LightningDataModule):
-    def __init__(self, options: KaggleEvaluationOptions, example:RelevanceExample, pl_module):
+    def __init__(self, options: KaggleEvaluationOptions, reranker_evaluator:RerankerEvaluator):
         super().__init__()
-        self.example_data = RerankDataset(example,pl_module)
+        self.data = MyIterableDataset(options, reranker_evaluator)
     def train_dataloader(self):
         return DataLoader(self.example_data, batch_size=options.batch_size)
     
@@ -202,11 +163,17 @@ class KaggleReranker(pl.LightningModule):
   
     def __init__(self, options: KaggleEvaluationOptions):
         super().__init__()
-        self.model = self.construct_t5(options)
-        self.reranker_evaluator = RerankerEvaluator(self.model, metric_names())
+        self.reranker = self.construct_t5(options)
+        self.reranker_evaluator = RerankerEvaluator(self.reranker, metric_names())
 
-    def forward(self, examples):
-        self.reranker_evaluator.evaluate(examples)
+    def forward(self, data):
+        outputs = self.reranker.model(**model_inputs)  # (batch_size, cur_len, vocab_size)
+        next_token_logits = outputs[0][:, -1, :]  # (batch_size, vocab_size)
+        decode_ids = torch.cat([decode_ids,
+                                next_token_logits.max(1)[1].unsqueeze(-1)],
+                               dim=-1)
+        past = outputs[1]
+        print(next_token_logits)
 
     #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
@@ -230,12 +197,12 @@ class KaggleReranker(pl.LightningModule):
     def configure_optimizers(self):
         pass
 
-    def test_step(self, batch, batch_idx):
-        batch_example = batch 
-        metric_result = dict()
-        for metric in self.reranker_evaluator.evaluate(batch_example):
-            metric_result[f'{metric.name:<{width}}for batch{batch_idx}'] = f'{metric.value:.5}'
-        return metrix_result
+    # def test_step(self, batch, batch_idx):
+    #     batch_example = batch 
+    #     metric_result = dict()
+    #     for metric in self.reranker_evaluator.evaluate(batch_example):
+    #         metric_result[f'{metric.name:<{width}}for batch{batch_idx}'] = f'{metric.value:.5}'
+    #     return metrix_result
        
 
 
