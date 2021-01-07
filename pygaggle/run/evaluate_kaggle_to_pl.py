@@ -154,10 +154,10 @@ class KaggleRerankerData(pl.LightningDataModule):
         super().__init__()
         self.data = MyIterableDataset(options, reranker_evaluator)
     def train_dataloader(self):
-        return DataLoader(self.example_data, batch_size=options.batch_size)
+        return DataLoader(self.data, batch_size=options.batch_size)
     
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+        return DataLoader(self.dataset, batch_size=self.batch_size)
 
 class KaggleReranker(pl.LightningModule):
   
@@ -168,13 +168,18 @@ class KaggleReranker(pl.LightningModule):
 
     def forward(self, data):
         outputs = self.reranker.model(**data)  # (batch_size, cur_len, vocab_size)
-        next_token_logits = outputs[0][:, -1, :]  # (batch_size, vocab_size)
+        next_token_logits = outputs[0][:, -1, :]  # (batch_size, vocab_size) which is equiavlent to batch_score
         decode_ids = data["decoder_input_ids"]
         decode_ids = torch.cat([decode_ids,
                                 next_token_logits.max(1)[1].unsqueeze(-1)],
                                dim=-1)
         past = outputs[1]
+        batch_scores = next_token_logits[:, [6136, 1176]]
+        batch_scores = torch.nn.functional.log_softmax(batch_scores, dim=1)
+        batch_log_probs = batch_scores[:, 1].tolist()
         print(next_token_logits)
+        for doc, score in zip(batch.documents, batch_log_probs):
+                doc.score = score
 
     #load pre_trained model
     def construct_t5(self, options: KaggleEvaluationOptions) -> Reranker:
